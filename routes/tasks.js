@@ -7,14 +7,14 @@ router.get('/', taskContoller.getAllTasks);
 
 router.get('/:id', taskContoller.getSingleTask);
 
-// router.get('/user/:userId', taskContoller.getTaskByUser);
+router.get('/user/:id', taskContoller.getTaskByUser);
 
-// router.post('/', taskContoller.createTask);
+router.post('/', taskContoller.createTask);
 
 // router.put('/:id', taskContoller.updateTask);
 
 // router.delete('/:id', taskContoller.deleteSingleTask);
 
-// router.delete(':/project/:projectId', taskContoller.deleteAllTasks);
+// router.delete(':/project/:id', taskContoller.deleteAllTasks);
 
 module.exports = router;

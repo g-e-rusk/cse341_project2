@@ -9,9 +9,9 @@ router.get('/:id', userContoller.getSingleUser);
 
 router.get('/:id/tasks', userContoller.getUserTasks);
 
-// router.get('/:id/projects', userContoller.getUserProjects);
+router.get('/:id/projects', userContoller.getUserProjects);
 
-// router.post('/', userContoller.createUser);
+router.post('/', userContoller.createUser);
 
 // router.put('/:id', userContoller.updateUser);
 

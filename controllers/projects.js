@@ -3,11 +3,30 @@ const mongodb = require('../database/database');
 
 const getAllProjects = async (req, res) => {
     //#swagger.tags=['Projects']
-    const result = await mongodb.getDatabase().db('taskManagement').collection('projects').find();
-    result.toArray().then((projects) => {
+    try {
+        const projects = await mongodb
+            .getDatabase()
+            .db('taskManagement')
+            .collection('projects')
+            .find()
+            .toArray();
+        
+        console.log("Retrieved", projects.length, "projects");
+        
+        if (projects.length === 0) {
+            return res.status(200).json([]);
+        }
+        
         res.setHeader('Content-Type', 'application/json');
         res.status(200).json(projects);
-    });
+        
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ 
+            message: "Failed to retrieve projects",
+            error: error.message 
+        });
+    }
 };
 
 const getSingleProject = async (req, res) => {
@@ -43,26 +62,62 @@ const getTasksInProject = async (req, res) => {
     }
 };
 
-// const getProjectByUser = async (req, res) => {
-//     //#swagger.tags=['Projects']
+const getProjectByUser = async (req, res) => {
+         //#swagger.tags=['Projects']
+    try {
+        const userId = req.params.id;
+        const projects = await mongodb.getDatabase().db('taskManagement').collection('projects').find({ teamMembers: userId }).toArray();
+        if (projects.length === 0) {
+            return res.status(200).json([]); 
+        }
 
-// };
+        res.setHeader('Content-Type', 'application/json');
+        res.status(200).json(projects);
+    } catch (error) {
+        console.log("Error:", error)
+        res.status(500).json({ message: error.message });
+    }
+};
 
-// const createProject = async(req, res) => {
-//     //#swagger.tags=['Projects']
-//     const project = {
-//         _id: req.body._id,
-//         name: req.body.name,
-//         description: req.body.description,
-//         teamMembers: [req.body.teamMembers]
-//     };
-//     const response = await mongodb.getDatabase().db('taskManagement').collection('projects').insertOne(project);
-//     if (response.acknowledged) {
-//         res.status(201).send('Project created successfully.');
-//     } else {
-//         res.status(500).json(response.error || 'Some error occured while creating the contact.');
-//     }
-// };
+const createProject = async (req, res) => {
+    //#swagger.tags=['Projects']  
+    try {
+        const project = {
+            _id: req.body._id,
+            name: req.body.name,
+            description: req.body.description,
+            teamMembers: req.body.teamMembers};
+        
+        const response = await mongodb
+            .getDatabase()
+            .db('taskManagement')
+            .collection('projects')
+            .insertOne(project);
+        
+        if (response.acknowledged) {
+            res.status(201).json({
+                message: 'Project created successfully',
+                projectId: response.insertedId || req.body._id
+            });
+        } else {
+            res.status(500).json({
+                error: 'Failed to create project'
+            });
+        }
+        
+    } catch (error) {
+        console.error('Error creating project:', error);
+
+        if (error.code === 11000) {
+            return res.status(400).json({
+                error: 'Project with this ID already exists'
+            });
+        }
+        res.status(500).json({
+            error: 'Internal server error'
+        });
+    }
+};
 
 // const updateProject = async(req, res) => {
 //     //#swagger.tags=['Projects']
@@ -93,4 +148,4 @@ const getTasksInProject = async (req, res) => {
 //     }
 // };
 
-module.exports = { getAllProjects, getSingleProject, getTasksInProject };
+module.exports = { getAllProjects, getSingleProject, getTasksInProject, getProjectByUser, createProject };

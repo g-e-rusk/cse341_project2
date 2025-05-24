@@ -9,9 +9,9 @@ router.get('/:id', projectContoller.getSingleProject);
 
 router.get('/:id/tasks', projectContoller.getTasksInProject);
 
-// router.get('/user/:userId'. projectContoller.getProjectByUser);
+router.get('/user/:id', projectContoller.getProjectByUser);
 
-// router.post('/', projectContoller.createProject);
+router.post('/', projectContoller.createProject);
 
 // router.put('/:id', projectContoller.updateProject);
 

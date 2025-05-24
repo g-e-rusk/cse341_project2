@@ -1,5 +1,5 @@
 const mongodb = require('../database/database');
-// const { ObjectId } = require('mongodb');
+const { checkResourceExists, handleErrorResponse } = require('../utils');
 
 const getAllTasks = async (req, res) => {
     //#swagger.tags=['Tasks']
@@ -8,56 +8,44 @@ const getAllTasks = async (req, res) => {
             .getDatabase()
             .db('taskManagement')
             .collection('tasks')
-            .find()
+            .find({})
             .toArray();
-        
-        console.log("Retrieved", tasks.length, "tasks");
-        
-        if (tasks.length === 0) {
-            return res.status(200).json([]);
-        }
-        
+
         res.setHeader('Content-Type', 'application/json');
         res.status(200).json(tasks);
-        
     } catch (error) {
-        console.error("Error:", error);
-        res.status(500).json({ 
-            message: "Failed to retrieve tasks",
-            error: error.message 
-        });
+        handleErrorResponse(error, res, 'Task');
     }
 };
 
 const getSingleTask = async (req, res) => {
     //#swagger.tags=['Tasks']
     try {
-    const taskId = req.params.id;
-    const result = await mongodb.getDatabase().db('taskManagement').collection('tasks').findOne({ _id: taskId });
-        if (!result) {
-            return res.status(404).json({message: 'Task not found'});
-        }
-        res.setHeader('Content-Type', 'application/json');
-        res.status(200).json(result);
+        const taskId = req.params.id;
+        const task = await checkResourceExists('tasks', taskId, 'Task');
+        res.status(200).json(task);
     } catch (error) {
-        res.status(500).json({message: error.message});
+        handleErrorResponse(error, res, 'Task');
     }
 };
 
 const getTaskByUser = async (req, res) => {
-//     //#swagger.tags=['Tasks']
-try {
+    //#swagger.tags=['Tasks']
+    try {
         const userId = req.params.id;
-        const tasks = await mongodb.getDatabase().db('taskManagement').collection('tasks').find({ assignedTo: userId }).toArray();
-        if (tasks.length === 0) {
-            return res.status(200).json([]); 
-        }
+        await checkResourceExists('users', userId, 'User');
+        
+        const tasks = await mongodb
+            .getDatabase()
+            .db('taskManagement')
+            .collection('tasks')
+            .find({ assignedTo: userId })
+            .toArray();
 
         res.setHeader('Content-Type', 'application/json');
         res.status(200).json(tasks);
     } catch (error) {
-        console.log("Error:", error)
-        res.status(500).json({ message: error.message });
+        handleErrorResponse(error, res, 'User');
     }
 };
 
@@ -93,16 +81,7 @@ const createTask = async (req, res) => {
         }
         
     } catch (error) {
-        console.error('Error creating task:', error);
-
-        if (error.code === 11000) {
-            return res.status(400).json({
-                error: 'Task with this ID already exists'
-            });
-        }
-        res.status(500).json({
-            error: 'Internal server error'
-        });
+        handleErrorResponse(error, res, 'Task');
     }
 };
 

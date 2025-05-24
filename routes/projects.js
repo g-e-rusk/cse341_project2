@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { validateRequestBody, validateProject } = require('../validation');
 
 const projectContoller = require('../controllers/projects');
 
@@ -11,7 +12,7 @@ router.get('/:id/tasks', projectContoller.getTasksInProject);
 
 router.get('/user/:id', projectContoller.getProjectByUser);
 
-router.post('/', projectContoller.createProject);
+router.post('/', validateRequestBody, validateProject, projectContoller.createProject);
 
 // router.put('/:id', projectContoller.updateProject);
 

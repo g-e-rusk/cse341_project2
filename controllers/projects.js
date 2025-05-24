@@ -1,5 +1,5 @@
 const mongodb = require('../database/database');
-// const { ObjectId } = require('mongodb');
+const { checkResourceExists, handleErrorResponse } = require('../utils');
 
 const getAllProjects = async (req, res) => {
     //#swagger.tags=['Projects']
@@ -8,24 +8,13 @@ const getAllProjects = async (req, res) => {
             .getDatabase()
             .db('taskManagement')
             .collection('projects')
-            .find()
+            .find({})
             .toArray();
-        
-        console.log("Retrieved", projects.length, "projects");
-        
-        if (projects.length === 0) {
-            return res.status(200).json([]);
-        }
-        
+
         res.setHeader('Content-Type', 'application/json');
         res.status(200).json(projects);
-        
     } catch (error) {
-        console.error("Error:", error);
-        res.status(500).json({ 
-            message: "Failed to retrieve projects",
-            error: error.message 
-        });
+        handleErrorResponse(error, res, 'Project');
     }
 };
 
@@ -33,49 +22,50 @@ const getSingleProject = async (req, res) => {
     //#swagger.tags=['Projects']
     try {
         const projectId = req.params.id;
-        const result = await mongodb.getDatabase().db('taskManagement').collection('projects').findOne({ _id: projectId });
-
-        if (!result) {
-            return res.status(404).json({message: 'Project not found'});
-        }
-        res.setHeader('Content-Type', 'application/json');
-        res.status(200).json(result);
+        const project = await checkResourceExists('projects', projectId, 'Project');
+        res.status(200).json(project);
     } catch (error) {
-        res.status(500).json({message: error.message});
+        handleErrorResponse(error, res, 'Project');
     }
 };
 
 const getTasksInProject = async (req, res) => {
-    //#swagger.tags=['Tasks']
+    //#swagger.tags=['Projects']
     try {
         const projectId = req.params.id;
-        const tasks = await mongodb.getDatabase().db('taskManagement').collection('tasks').find({ projectId: projectId }).toArray();
+        await checkResourceExists('projects', projectId, 'Project');
 
-        if (tasks.length === 0) {
-            return res.status(200).json([]); 
-        }
-        
+        const tasks = await mongodb
+            .getDatabase()
+            .db('taskManagement')
+            .collection('tasks')
+            .find({ projectId: projectId }) 
+            .toArray();
+
         res.setHeader('Content-Type', 'application/json');
         res.status(200).json(tasks);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        handleErrorResponse(error, res, 'Project');
     }
 };
 
 const getProjectByUser = async (req, res) => {
-         //#swagger.tags=['Projects']
+    //#swagger.tags=['Users'] 
     try {
         const userId = req.params.id;
-        const projects = await mongodb.getDatabase().db('taskManagement').collection('projects').find({ teamMembers: userId }).toArray();
-        if (projects.length === 0) {
-            return res.status(200).json([]); 
-        }
+        await checkResourceExists('users', userId, 'User');
+
+        const projects = await mongodb
+            .getDatabase()
+            .db('taskManagement')
+            .collection('projects')
+            .find({ teamMembers: userId })
+            .toArray();
 
         res.setHeader('Content-Type', 'application/json');
         res.status(200).json(projects);
     } catch (error) {
-        console.log("Error:", error)
-        res.status(500).json({ message: error.message });
+        handleErrorResponse(error, res, 'User');
     }
 };
 
@@ -106,16 +96,7 @@ const createProject = async (req, res) => {
         }
         
     } catch (error) {
-        console.error('Error creating project:', error);
-
-        if (error.code === 11000) {
-            return res.status(400).json({
-                error: 'Project with this ID already exists'
-            });
-        }
-        res.status(500).json({
-            error: 'Internal server error'
-        });
+        handleErrorResponse(error, res, 'Project');
     }
 };
 

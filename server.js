@@ -2,14 +2,14 @@
 const express = require('express');
 const mongodb = require('./database/database');
 const bodyParser = require('body-parser');
-// const swaggerUi = require('swagger-ui-express');
-// const swaggerDocument = require('./swagger.json');
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./swagger.json');
 
 const app = express();
 
 const port = process.env.PORT || 3000;
 
-// app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(bodyParser.json());

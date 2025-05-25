@@ -5,10 +5,10 @@
     "description": "CRUD Operations API",
     "version": "1.0.0"
   },
-  "host": "cse341-project2-h740.onrender.com/",
+  "host": "localhost:3000",
   "basePath": "/",
   "schemes": [
-    "https"
+    "http"
   ],
   "paths": {
     "/": {
@@ -24,7 +24,7 @@
         }
       }
     },
-    "/api-docs": {
+    "/swagger/api-docs": {
       "get": {
         "description": "",
         "responses": {
@@ -200,7 +200,7 @@
     "/projects/user/{id}": {
       "get": {
         "tags": [
-          "Users"
+          "Projects"
         ],
         "description": "",
         "produces": [

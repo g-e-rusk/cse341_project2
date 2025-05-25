@@ -50,7 +50,7 @@ const getTasksInProject = async (req, res) => {
 };
 
 const getProjectByUser = async (req, res) => {
-    //#swagger.tags=['Users'] 
+    //#swagger.tags=['Projects'] 
     try {
         const userId = req.params.id;
         await checkResourceExists('users', userId, 'User');

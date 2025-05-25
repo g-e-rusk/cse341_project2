@@ -145,34 +145,21 @@ const deleteProject = async (req, res) => {
     try {
         const projectId = req.params.id;
         await checkResourceExists('projects', projectId, 'Project');
-
-        const associatedTasks = await mongodb
-            .getDatabase()
-            .db('taskManagement')
-            .collection('tasks')
-            .find({ projectId: projectId })
-            .toArray();
-
-        if (associatedTasks.length > 0) {
-            return res.status(409).json({
-                error: 'Cannot delete project',
-                message: `Project has ${associatedTasks.length} associated tasks.  Delete or reassign tasks first.`
-            });
-        }
-
+        
         const result = await mongodb
             .getDatabase()
             .db('taskManagement')
             .collection('projects')
             .deleteOne({ _id: projectId });
-
+        
         if (result.deletedCount > 0) {
-            res.status(204).send();
+            res.status(204).send(); 
         } else {
             res.status(500).json({
                 error: 'Failed to delete project'
             });
         }
+        
     } catch (error) {
         handleErrorResponse(error, res, 'Project');
     }

@@ -14,8 +14,6 @@ router.post('/', validateRequestBody, validateTask, taskContoller.createTask);
 
 router.put('/:id', validateRequestBody, validateTaskUpdate, taskContoller.updateTask);
 
-router.delete('/project/:id', taskContoller.deleteAllTasksInProject);
-
-router.delete('/:id', taskContoller.deleteSingleTask);
+router.delete('/:id', taskContoller.deleteTask);
 
 module.exports = router;

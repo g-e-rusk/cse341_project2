@@ -151,34 +151,11 @@ const deleteUser = async (req, res) => {
     //#swagger.tags=['Users']
     try {
         const userId = req.params.id;
+        
+        // Check if user exists
         await checkResourceExists('users', userId, 'User');
         
-        const assignedTasks = await mongodb
-            .getDatabase()
-            .db('taskManagement')
-            .collection('tasks')
-            .find({ assignedTo: userId })
-            .toArray();
-        
-        const memberProjects = await mongodb
-            .getDatabase()
-            .db('taskManagement')
-            .collection('projects')
-            .find({ teamMembers: userId })
-            .toArray();
-        
-        if (assignedTasks.length > 0 || memberProjects.length > 0) {
-            return res.status(409).json({
-                error: 'Cannot delete user',
-                message: 'User has associated data that must be handled first.',
-                details: {
-                    assignedTasks: assignedTasks.length,
-                    memberProjects: memberProjects.length,
-                    instructions: 'Reassign tasks to other users and remove user from project teams before deletion.'
-                }
-            });
-        }
-        
+        // Delete the user directly
         const result = await mongodb
             .getDatabase()
             .db('taskManagement')
@@ -186,7 +163,7 @@ const deleteUser = async (req, res) => {
             .deleteOne({ _id: userId });
         
         if (result.deletedCount > 0) {
-            res.status(204).send(); 
+            res.status(204).send(); // 204 No Content for successful deletion
         } else {
             res.status(500).json({
                 error: 'Failed to delete user'

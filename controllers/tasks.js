@@ -128,12 +128,15 @@ const updateTask = async (req, res) => {
     }
 };
 
-const deleteSingleTask = async (req, res) => {
+const deleteTask = async (req, res) => {
     //#swagger.tags=['Tasks']
     try {
         const taskId = req.params.id;
+        
+        // Check if task exists
         await checkResourceExists('tasks', taskId, 'Task');
         
+        // Delete the task directly
         const result = await mongodb
             .getDatabase()
             .db('taskManagement')
@@ -141,7 +144,7 @@ const deleteSingleTask = async (req, res) => {
             .deleteOne({ _id: taskId });
         
         if (result.deletedCount > 0) {
-            res.status(204).send(); 
+            res.status(204).send(); // 204 No Content for successful deletion
         } else {
             res.status(500).json({
                 error: 'Failed to delete task'
@@ -153,47 +156,4 @@ const deleteSingleTask = async (req, res) => {
     }
 };
 
-const deleteAllTasksInProject = async (req, res) => {
-    //#swagger.tags=['Tasks']
-    try {
-        const projectId = req.params.id;
-        await checkResourceExists('projects', projectId, 'Project');
-        
-        const tasksInProject = await mongodb
-            .getDatabase()
-            .db('taskManagement')
-            .collection('tasks')
-            .find({ projectId: projectId })
-            .toArray();
-        
-        if (tasksInProject.length === 0) {
-            return res.status(200).json({
-                message: 'No tasks found in this project to delete',
-                deletedCount: 0
-            });
-        }
-        
-        const result = await mongodb
-            .getDatabase()
-            .db('taskManagement')
-            .collection('tasks')
-            .deleteMany({ projectId: projectId });
-        
-        if (result.deletedCount > 0) {
-            res.status(200).json({
-                message: `Successfully deleted ${result.deletedCount} tasks from project`,
-                deletedCount: result.deletedCount,
-                projectId: projectId
-            });
-        } else {
-            res.status(500).json({
-                error: 'Failed to delete tasks from project'
-            });
-        }
-        
-    } catch (error) {
-        handleErrorResponse(error, res, 'Project');
-    }
-};
-
-module.exports = { getAllTasks, getSingleTask, getTaskByUser, createTask, updateTask, deleteSingleTask, deleteAllTasksInProject };
+module.exports = { getAllTasks, getSingleTask, getTaskByUser, createTask, updateTask, deleteTask };

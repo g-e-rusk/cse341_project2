@@ -107,33 +107,96 @@ const createUser = async (req, res) => {
     }
 };
 
-// const updateUser = async(req, res) => {
-//     //#swagger.tags=['Users']
-//     const userId = new ObjectId(req.params.id);
-//     const contact = {
-//         firstName: req.body.firstName,
-//         lastName: req.body.lastName,
-//         email: req.body.email,
-//         favoriteColor: req.body.favoriteColor,
-//         birthday: req.body.birthday
-//     };
-//     const response = await mongodb.getDatabase().db('taskManagement').collection('users').replaceOne({ _id: userId }, contact);
-//     if (response.modifiedCount > 0) {
-//         res.status(204).end();
-//     } else {
-//         res.status(500).json(response.error || 'Some error occured while updating the contact.');
-//     }
-// };
+const updateUser = async (req, res) => {
+    //#swagger.tags=['Users']
+    try {
+        const userId = req.params.id;
+        await checkResourceExists('users', userId, 'User');
 
-// const deleteUser = async(req, res) => {
-//     //#swagger.tags=['Users']
-//     const userId = new ObjectId(req.params.id);
-//     const response = await mongodb.getDatabase().db('taskManagement').collection('users').deleteOne({ _id: userId });
-//     if (response.deletedCount > 0) {
-//         res.status(204).end();
-//     } else {
-//         res.status(500).json(response.error || 'Some error occured while deleting the contact.');
-//     }
-// };
+        const updateData = {};
+        if (req.body.name !== undefined) updateData.name = req.body.name;
+        if (req.body.email !== undefined) updateData.email = req.body.email;
+        if (req.body.role !== undefined) updateData.role = req.body.role.toLowerCase();
+        
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({
+                error: 'At least one field must be provided for update'
+            });
+        }
+        
+        const result = await mongodb
+            .getDatabase()
+            .db('taskManagement')
+            .collection('users')
+            .updateOne({ _id: userId }, { $set: updateData });
+        
+        if (result.modifiedCount > 0) {
+            res.status(200).json({
+                message: 'User updated successfully',
+                userId: userId
+            });
+        } else {
+            res.status(200).json({
+                message: 'No changes made to user',
+                userId: userId
+            });
+        }
+        
+    } catch (error) {
+        handleErrorResponse(error, res, 'User');
+    }
+};
 
-module.exports = { getAllUsers, getSingleUser, getUserTasks, getUserProjects,createUser };
+const deleteUser = async (req, res) => {
+    //#swagger.tags=['Users']
+    try {
+        const userId = req.params.id;
+        await checkResourceExists('users', userId, 'User');
+        
+        const assignedTasks = await mongodb
+            .getDatabase()
+            .db('taskManagement')
+            .collection('tasks')
+            .find({ assignedTo: userId })
+            .toArray();
+        
+        const memberProjects = await mongodb
+            .getDatabase()
+            .db('taskManagement')
+            .collection('projects')
+            .find({ teamMembers: userId })
+            .toArray();
+        
+        if (assignedTasks.length > 0 || memberProjects.length > 0) {
+            return res.status(409).json({
+                error: 'Cannot delete user',
+                message: 'User has associated data that must be handled first.',
+                details: {
+                    assignedTasks: assignedTasks.length,
+                    memberProjects: memberProjects.length,
+                    instructions: 'Reassign tasks to other users and remove user from project teams before deletion.'
+                }
+            });
+        }
+        
+        const result = await mongodb
+            .getDatabase()
+            .db('taskManagement')
+            .collection('users')
+            .deleteOne({ _id: userId });
+        
+        if (result.deletedCount > 0) {
+            res.status(204).send(); 
+        } else {
+            res.status(500).json({
+                error: 'Failed to delete user'
+            });
+        }
+        
+    } catch (error) {
+        handleErrorResponse(error, res, 'User');
+    }
+};
+
+
+module.exports = { getAllUsers, getSingleUser, getUserTasks, getUserProjects, createUser, updateUser, deleteUser };

@@ -85,37 +85,115 @@ const createTask = async (req, res) => {
     }
 };
 
-// const updateTask = async(req, res) => {
-//     //#swagger.tags=['Tasks']
-//     const userId = new ObjectId(req.params.id);
-//     const contact = {
-//         firstName: req.body.firstName,
-//         lastName: req.body.lastName,
-//         email: req.body.email,
-//         favoriteColor: req.body.favoriteColor,
-//         birthday: req.body.birthday
-//     };
-//     const response = await mongodb.getDatabase().db('taskManagement').collection('tasks').replaceOne({ _id: userId }, contact);
-//     if (response.modifiedCount > 0) {
-//         res.status(204).end();
-//     } else {
-//         res.status(500).json(response.error || 'Some error occured while updating the contact.');
-//     }
-// };
+const updateTask = async (req, res) => {
+    //#swagger.tags=['Tasks']
+    try {
+        const taskId = req.params.id;
+        await checkResourceExists('tasks', taskId, 'Task');
+        
+        const updateData = {};
+        if (req.body.title !== undefined) updateData.title = req.body.title;
+        if (req.body.description !== undefined) updateData.description = req.body.description;
+        if (req.body.assignedTo !== undefined) updateData.assignedTo = req.body.assignedTo;
+        if (req.body.status !== undefined) updateData.status = req.body.status.toLowerCase();
+        if (req.body.priority !== undefined) updateData.priority = req.body.priority.toLowerCase();
+        if (req.body.dueDate !== undefined) updateData.dueDate = req.body.dueDate;
+        
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({
+                error: 'At least one field must be provided for update'
+            });
+        }
+        
+        const result = await mongodb
+            .getDatabase()
+            .db('taskManagement')
+            .collection('tasks')
+            .updateOne({ _id: taskId }, { $set: updateData });
+        
+        if (result.modifiedCount > 0) {
+            res.status(200).json({
+                message: 'Task updated successfully',
+                taskId: taskId
+            });
+        } else {
+            res.status(200).json({
+                message: 'No changes made to task',
+                taskId: taskId
+            });
+        }
+        
+    } catch (error) {
+        handleErrorResponse(error, res, 'Task');
+    }
+};
 
-// const deleteSingleTask = async(req, res) => {
-//     //#swagger.tags=['Tasks']
-//     const userId = new ObjectId(req.params.id);
-//     const response = await mongodb.getDatabase().db('taskManagement').collection('tasks').deleteOne({ _id: userId });
-//     if (response.deletedCount > 0) {
-//         res.status(204).end();
-//     } else {
-//         res.status(500).json(response.error || 'Some error occured while deleting the contact.');
-//     }
-// };
+const deleteSingleTask = async (req, res) => {
+    //#swagger.tags=['Tasks']
+    try {
+        const taskId = req.params.id;
+        await checkResourceExists('tasks', taskId, 'Task');
+        
+        const result = await mongodb
+            .getDatabase()
+            .db('taskManagement')
+            .collection('tasks')
+            .deleteOne({ _id: taskId });
+        
+        if (result.deletedCount > 0) {
+            res.status(204).send(); 
+        } else {
+            res.status(500).json({
+                error: 'Failed to delete task'
+            });
+        }
+        
+    } catch (error) {
+        handleErrorResponse(error, res, 'Task');
+    }
+};
 
-// const deleteAllTasks = async (req, res) => {
-//     //#swagger.tags=['Tasks']
-// };
+const deleteAllTasksInProject = async (req, res) => {
+    //#swagger.tags=['Tasks']
+    try {
+        const projectId = req.params.id;
+        await checkResourceExists('projects', projectId, 'Project');
+        
+        const tasksInProject = await mongodb
+            .getDatabase()
+            .db('taskManagement')
+            .collection('tasks')
+            .find({ projectId: projectId })
+            .toArray();
+        
+        if (tasksInProject.length === 0) {
+            return res.status(200).json({
+                message: 'No tasks found in this project to delete',
+                deletedCount: 0
+            });
+        }
+        
+        const result = await mongodb
+            .getDatabase()
+            .db('taskManagement')
+            .collection('tasks')
+            .deleteMany({ projectId: projectId });
+        
+        if (result.deletedCount > 0) {
+            res.status(200).json({
+                message: `Successfully deleted ${result.deletedCount} tasks from project`,
+                deletedCount: result.deletedCount,
+                projectId: projectId
+            });
+        } else {
+            res.status(500).json({
+                error: 'Failed to delete tasks from project'
+            });
+        }
+        
+    } catch (error) {
+        handleErrorResponse(error, res, 'Project');
+    }
+};
 
-module.exports = { getAllTasks, getSingleTask, getTaskByUser, createTask };
+module.exports = { getAllTasks, getSingleTask, getTaskByUser, createTask, updateTask, deleteSingleTask, deleteAllTasksInProject };

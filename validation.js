@@ -144,6 +144,153 @@ const validateUser = (req, res, next) => {
     next();
 };
 
+const validateProjectUpdate = (req, res, next) => {
+    const { name, description, teamMembers } = req.body;
+    const errors = [];
+
+    if (name !== undefined) {
+        if (!name || name.trim() === '') {
+            errors.push('Project name cannot be empty');
+        } else if (name.length > 100) {
+            errors.push('Project name must be 100 characters or less');
+        }
+    }
+
+    if (description !== undefined) {
+        if (!description || description.trim() === '') {
+            errors.push('Project description cannot be empty');
+        } else if (description.length > 500) {
+            errors.push('Project description must be 500 characters or less');
+        }
+    }
+
+    if (teamMembers !== undefined) {
+        if (!Array.isArray(teamMembers)) {
+            errors.push('Team members must be an array');
+        } else if (teamMembers.length === 0) {
+            errors.push('At least one team member is required');
+        } else {
+            teamMembers.forEach((memberId, index) => {
+                if (!memberId || memberId.trim() === '') {
+                    errors.push(`Team member at index ${index} cannot be empty`);
+                }
+            });
+        }
+    }
+
+    if (errors.length > 0) {
+        return res.status(400).json({
+            error: 'Validation failed',
+            details: errors
+        });
+    }
+
+    next();
+};
+
+const validateTaskUpdate = (req, res, next) => {
+    const { title, description, assignedTo, status, priority, dueDate } = req.body;
+    const errors = [];
+    const validStatuses = ['todo', 'in-progress', 'waiting', 'completed', 'cancelled'];
+    const validPriorities = ['low', 'medium', 'high'];
+
+    if (title !== undefined) {
+        if (!title || title.trim() === '') {
+            errors.push('Task title cannot be empty');
+        } else if (title.length > 200) {
+            errors.push('Task title must be 200 characters or less');
+        }
+    }
+
+    if (description !== undefined) {
+        if (!description || description.trim() === '') {
+            errors.push('Task description cannot be empty');
+        } else if (description.length > 1000) {
+            errors.push('Task description must be 1000 characters or less');
+        }
+    }
+
+    if (assignedTo !== undefined) {
+        if (!assignedTo || assignedTo.trim() === '') {
+            errors.push('Assigned user ID cannot be empty');
+        }
+    }
+
+    if (status !== undefined) {
+        if (!status || status.trim() === '') {
+            errors.push('Task status cannot be empty');
+        } else if (!validStatuses.includes(status.toLowerCase())) {
+            errors.push(`Status must be one of: ${validStatuses.join(', ')}`);
+        }
+    }
+
+    if (priority !== undefined) {
+        if (!priority || priority.trim() === '') {
+            errors.push('Task priority cannot be empty');
+        } else if (!validPriorities.includes(priority.toLowerCase())) {
+            errors.push(`Priority must be one of: ${validPriorities.join(', ')}`);
+        }
+    }
+
+    if (dueDate !== undefined) {
+        if (!dueDate || dueDate.trim() === '') {
+            errors.push('Due date cannot be empty');
+        } else if (!isValidDate(dueDate)) {
+            errors.push('Due date must be a valid date format');
+        }
+    }
+
+    if (errors.length > 0) {
+        return res.status(400).json({
+            error: 'Validation failed',
+            details: errors
+        });
+    }
+
+    next();
+};
+
+const validateUserUpdate = (req, res, next) => {
+    const { name, email, role } = req.body;
+    const errors = [];
+    const validRoles = ['admin', 'manager', 'developer', 'tester', 'user'];
+
+    if (name !== undefined) {
+        if (!name || name.trim() === '') {
+            errors.push('User name cannot be empty');
+        } else if (name.length < 2) {
+            errors.push('User name must be at least 2 characters long');
+        } else if (name.length > 50) {
+            errors.push('User name must be 50 characters or less');
+        }
+    }
+
+    if (email !== undefined) {
+        if (!email || email.trim() === '') {
+            errors.push('Email cannot be empty');
+        } else if (!isValidEmail(email)) {
+            errors.push('Email must be a valid email address');
+        }
+    }
+
+    if (role !== undefined) {
+        if (!role || role.trim() === '') {
+            errors.push('Role cannot be empty');
+        } else if (!validRoles.includes(role.toLowerCase())) {
+            errors.push(`Role must be one of: ${validRoles.join(', ')}`);
+        }
+    }
+
+    if (errors.length > 0) {
+        return res.status(400).json({
+            error: 'Validation failed',
+            details: errors
+        });
+    }
+
+    next();
+};
+
 const validateRequestBody = (req, res, next) => {
     if (!req.body || Object.keys(req.body).length === 0) {
         return res.status(400).json({
@@ -153,4 +300,11 @@ const validateRequestBody = (req, res, next) => {
     next();
 };
 
-module.exports = { validateProject, validateTask, validateUser, validateRequestBody }
+module.exports = { 
+    validateProject, 
+    validateTask, 
+    validateUser, 
+    validateProjectUpdate,
+    validateTaskUpdate,  
+    validateUserUpdate, 
+    validateRequestBody }

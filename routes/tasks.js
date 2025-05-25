@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { validateRequestBody, validateTask } = require('../validation');
+const { validateRequestBody, validateTask, validateTaskUpdate } = require('../validation');
 
 const taskContoller = require('../controllers/tasks');
 
@@ -12,10 +12,10 @@ router.get('/user/:id', taskContoller.getTaskByUser);
 
 router.post('/', validateRequestBody, validateTask, taskContoller.createTask);
 
-// router.put('/:id', taskContoller.updateTask);
+router.put('/:id', validateRequestBody, validateTaskUpdate, taskContoller.updateTask);
 
-// router.delete('/:id', taskContoller.deleteSingleTask);
+router.delete('/project/:id', taskContoller.deleteAllTasksInProject);
 
-// router.delete(':/project/:id', taskContoller.deleteAllTasks);
+router.delete('/:id', taskContoller.deleteSingleTask);
 
 module.exports = router;

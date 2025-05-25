@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { validateRequestBody, validateUser } = require('../validation');
+const { validateRequestBody, validateUser, validateUserUpdate } = require('../validation');
 
 const userContoller = require('../controllers/users');
 
@@ -14,8 +14,8 @@ router.get('/:id/projects', userContoller.getUserProjects);
 
 router.post('/', validateRequestBody, validateUser, userContoller.createUser);
 
-// router.put('/:id', userContoller.updateUser);
+router.put('/:id', validateRequestBody, validateUserUpdate, userContoller.updateUser);
 
-// router.delete('/:id', userContoller.deleteUser);
+router.delete('/:id', userContoller.deleteUser);
 
 module.exports = router;

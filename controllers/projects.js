@@ -100,33 +100,82 @@ const createProject = async (req, res) => {
     }
 };
 
-// const updateProject = async(req, res) => {
-//     //#swagger.tags=['Projects']
-//     const userId = new ObjectId(req.params.id);
-//     const contact = {
-//         firstName: req.body.firstName,
-//         lastName: req.body.lastName,
-//         email: req.body.email,
-//         favoriteColor: req.body.favoriteColor,
-//         birthday: req.body.birthday
-//     };
-//     const response = await mongodb.getDatabase().db('taskManagement').collection('projects').replaceOne({ _id: userId }, contact);
-//     if (response.modifiedCount > 0) {
-//         res.status(204).end();
-//     } else {
-//         res.status(500).json(response.error || 'Some error occured while updating the contact.');
-//     }
-// };
+const updateProject = async (req, res) => {
+    //#swagger.tags=['Projects']
+    try {
+        const projectId = req.params.id;
+        await checkResourceExists('projects', projectId, 'Project');
+        
+        const updateData = {};
+        if (req.body.name !== undefined) updateData.name = req.body.name;
+        if (req.body.description !== undefined) updateData.description = req.body.description;
+        if (req.body.teamMembers !== undefined) updateData.teamMembers = req.body.teamMembers;
+        
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({
+                error: 'At least one field must be provided for update'
+            });
+        }
+        
+        const result = await mongodb
+            .getDatabase()
+            .db('taskManagement')
+            .collection('projects')
+            .updateOne({ _id: projectId }, { $set: updateData });
+        
+        if (result.modifiedCount > 0) {
+            res.status(200).json({
+                message: 'Project updated successfully',
+                projectId: projectId
+            });
+        } else {
+            res.status(200).json({
+                message: 'No changes made to project',
+                projectId: projectId
+            });
+        }
+        
+    } catch (error) {
+        handleErrorResponse(error, res, 'Project');
+    }
+};
 
-// const deleteProject = async(req, res) => {
-//     //#swagger.tags=['Projects']
-//     const userId = new ObjectId(req.params.id);
-//     const response = await mongodb.getDatabase().db('taskManagement').collection('projects').deleteOne({ _id: userId });
-//     if (response.deletedCount > 0) {
-//         res.status(204).end();
-//     } else {
-//         res.status(500).json(response.error || 'Some error occured while deleting the contact.');
-//     }
-// };
+const deleteProject = async (req, res) => {
+    //#swagger.tags=['Projects']
+    try {
+        const projectId = req.params.id;
+        await checkResourceExists('projects', projectId, 'Project');
 
-module.exports = { getAllProjects, getSingleProject, getTasksInProject, getProjectByUser, createProject };
+        const associatedTasks = await mongodb
+            .getDatabase()
+            .db('taskManagement')
+            .collection('tasks')
+            .find({ projectId: projectId })
+            .toArray();
+
+        if (associatedTasks.length > 0) {
+            return res.status(409).json({
+                error: 'Cannot delete project',
+                message: `Project has ${associatedTasks.length} associated tasks.  Delete or reassign tasks first.`
+            });
+        }
+
+        const result = await mongodb
+            .getDatabase()
+            .db('taskManagement')
+            .collection('projects')
+            .deleteOne({ _id: projectId });
+
+        if (result.deletedCount > 0) {
+            res.status(204).send();
+        } else {
+            res.status(500).json({
+                error: 'Failed to delete project'
+            });
+        }
+    } catch (error) {
+        handleErrorResponse(error, res, 'Project');
+    }
+};
+
+module.exports = { getAllProjects, getSingleProject, getTasksInProject, getProjectByUser, createProject, updateProject, deleteProject };

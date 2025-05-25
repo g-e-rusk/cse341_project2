@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { validateRequestBody, validateProject } = require('../validation');
+const { validateRequestBody, validateProject, validateProjectUpdate } = require('../validation');
 
 const projectContoller = require('../controllers/projects');
 
@@ -14,8 +14,8 @@ router.get('/user/:id', projectContoller.getProjectByUser);
 
 router.post('/', validateRequestBody, validateProject, projectContoller.createProject);
 
-// router.put('/:id', projectContoller.updateProject);
+router.put('/:id', validateRequestBody, validateProjectUpdate, projectContoller.updateProject);
 
-// router.delete('/:id', projectContoller.deleteProject);
+router.delete('/:id', projectContoller.deleteProject);
 
 module.exports = router;

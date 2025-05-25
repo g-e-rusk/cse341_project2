@@ -5,10 +5,10 @@
     "description": "CRUD Operations API",
     "version": "1.0.0"
   },
-  "host": "localhost:3000",
+  "host": "cse341-project2-h740.onrender.com/",
   "basePath": "/",
   "schemes": [
-    "http"
+    "https"
   ],
   "paths": {
     "/": {
@@ -408,19 +408,13 @@
         }
       }
     },
-    "/{tasks}/project/{id}": {
+    "/tasks/project/{id}": {
       "delete": {
         "tags": [
           "Tasks"
         ],
         "description": "",
         "parameters": [
-          {
-            "name": "tasks",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
           {
             "name": "id",
             "in": "path",

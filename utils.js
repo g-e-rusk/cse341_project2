@@ -1,4 +1,3 @@
-/* eslint-disable no-useless-catch */
 const mongodb = require('./database/database');
 
 const isValidId = (id) => {

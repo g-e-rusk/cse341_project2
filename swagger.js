@@ -5,8 +5,8 @@ const doc = {
         title: 'API - Geri Rusk, Project 2 - CSE 341',
         description: 'CRUD Operations API',
     },
-    host: 'cse341-project2-h740.onrender.com',
-    schemes: ['https'],
+    host: 'localhost:3000',
+    schemes: ['http'],
 };
 
 const outputFile = './swagger.json';
